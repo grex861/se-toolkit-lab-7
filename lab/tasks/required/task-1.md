@@ -129,15 +129,15 @@ Title: `[Task] Observe System Component Interaction`
 
 #### 1.2.2. Prepare the environment
 
-1. To create the [`.env.docker.secret`](../../../wiki/dotenv-docker-secret.md#what-is-envdockersecret) file (if it does not exist),
+1. [Clean up `Docker`](../../../wiki/docker.md#clean-up-docker).
+
+2. To create the [`.env.docker.secret`](../../../wiki/dotenv-docker-secret.md#what-is-envdockersecret) file (if it does not exist),
 
    [run in the `VS Code Terminal`](../../../wiki/vs-code.md#run-a-command-in-the-vs-code-terminal):
 
    ```terminal
    cp .env.docker.example .env.docker.secret
    ```
-
-2. [Clean up `Docker`](../../../wiki/docker.md#clean-up-docker).
 
 #### 1.2.3. Start the services
 
