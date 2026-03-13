@@ -4,7 +4,7 @@
 
 - [What is a shell](#what-is-a-shell)
   - [Login shell](#login-shell)
-  - [`Linix` shell](#linix-shell)
+  - [`Linux` shell](#linux-shell)
 - [Shell variants](#shell-variants)
   - [`bash`](#bash)
   - [`zsh`](#zsh)
@@ -33,13 +33,11 @@ It reads login-specific configuration files such as `~/.bash_profile` or `~/.pro
 > [!NOTE]
 > A `VS Code` terminal is typically a non-login shell and reads `~/.bashrc` instead.
 
-### `Linix` shell
+### `Linux` shell
 
-<!-- TODO explain better -->
+Used in the docs to refer to a [shell](#shell) opened in [`Linux`](./operating-system.md#linux).
 
-Used in the docs to refer to a shell opened in [`Linux`](./operating-system.md#linux).
-
-On [`Windows`](./operating-system.md#windows), the shell must be opened in [WSL](./operating-system.md#wsl).
+If using [`Windows`](./operating-system.md#windows), [switch to the `Linux` shell](./vs-code.md#windows-only-switch-to-the-linux-shell-for-the-vs-code-terminal).
 
 ## Shell variants
 
