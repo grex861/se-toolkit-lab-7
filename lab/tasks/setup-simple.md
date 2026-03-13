@@ -6,7 +6,9 @@
   - [1.3. Start the services locally](#13-start-the-services-locally)
   - [1.4. Populate the database](#14-populate-the-database)
   - [1.5. Verify the local deployment](#15-verify-the-local-deployment)
-  - [1.6. Coding agent](#16-coding-agent)
+  - [1.6. Deploy to your VM](#16-deploy-to-your-vm)
+  - [1.7. Set up LLM access (Qwen Code API)](#17-set-up-llm-access-qwen-code-api)
+  - [1.8. Coding agent](#18-coding-agent)
 
 ## 1. Required steps
 
@@ -184,7 +186,106 @@ The database starts empty. You need to run the ETL pipeline to populate it with 
 > - You entered the correct API key in the frontend
 > - Try selecting a different lab in the dropdown (e.g., `lab-04`)
 
-### 1.6. Coding agent
+### 1.6. Deploy to your VM
+
+The autochecker tests your agent against your **deployed backend on your VM**. You need to deploy the same services there.
+
+1. [Connect to the VM](../../wiki/ssh.md#connect-to-the-vm).
+
+2. Clone your fork on the VM:
+
+   ```terminal
+   git clone https://github.com/<your-github-username>/se-toolkit-lab-6 ~/se-toolkit-lab-6
+   ```
+
+3. Create the environment file:
+
+   ```terminal
+   cd ~/se-toolkit-lab-6
+   cp .env.docker.example .env.docker.secret
+   ```
+
+4. Edit `.env.docker.secret` — set the same credentials as in your local file:
+
+   ```terminal
+   nano .env.docker.secret
+   ```
+
+   Set `AUTOCHECKER_EMAIL`, `AUTOCHECKER_PASSWORD`, and `LMS_API_KEY` (use the same values as locally).
+
+5. Start the services:
+
+   ```terminal
+   docker compose --env-file .env.docker.secret up --build -d
+   ```
+
+6. Populate the database:
+
+   ```terminal
+   curl -X POST http://localhost:42002/pipeline/sync \
+     -H "Authorization: Bearer <your-LMS_API_KEY>" \
+     -H "Content-Type: application/json" \
+     -d '{}'
+   ```
+
+7. Verify the deployment:
+
+   ```terminal
+   curl -s http://localhost:42002/items/ -H "Authorization: Bearer <your-LMS_API_KEY>" | head -c 200
+   ```
+
+   You should see a JSON array of items.
+
+> [!IMPORTANT]
+> Keep the services running on your VM. The autochecker will query your backend during evaluation.
+
+### 1.7. Set up LLM access (Qwen Code API)
+
+Your agent needs an LLM to answer questions. [Qwen Code](../../wiki/qwen.md#what-is-qwen-code) provides **1000 free requests per day** and works from Russia — no VPN or credit card needed.
+
+1. [Set up the Qwen Code API on your VM](../../wiki/qwen.md#set-up-the-qwen-code-api-remote-machine).
+
+   After completing the setup, you will have the Qwen API running on your VM at `http://localhost:<qwen-api-port>/v1`.
+
+2. On your **local machine**, create the agent environment file:
+
+   ```terminal
+   cp .env.agent.example .env.agent.secret
+   ```
+
+3. Edit `.env.agent.secret`:
+
+   ```text
+   LLM_API_KEY=<your-QWEN_API_KEY>
+   LLM_API_BASE=http://<your-vm-ip-address>:<qwen-api-port>/v1
+   LLM_MODEL=qwen3-coder-plus
+   ```
+
+   Replace `<your-QWEN_API_KEY>`, `<your-vm-ip-address>`, and `<qwen-api-port>` with your values.
+
+4. Verify the connection from your local machine:
+
+   ```terminal
+   curl -s http://<your-vm-ip-address>:<qwen-api-port>/v1/chat/completions \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer <your-QWEN_API_KEY>" \
+     -d '{"model":"qwen3-coder-plus","messages":[{"role":"user","content":"What is 2+2?"}]}' \
+     | python -m json.tool
+   ```
+
+<details><summary><b>Alternative: OpenRouter (click to open)</b></summary>
+
+If you prefer [OpenRouter](https://openrouter.ai), register and get an API key. Then set in `.env.agent.secret`:
+
+```text
+LLM_API_KEY=<your-openrouter-key>
+LLM_API_BASE=https://openrouter.ai/api/v1
+LLM_MODEL=meta-llama/llama-3.3-70b-instruct:free
+```
+
+</details>
+
+### 1.8. Coding agent
 
 > [!NOTE]
 > You should already have a coding agent from Lab 5.
