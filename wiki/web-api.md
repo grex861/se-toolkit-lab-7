@@ -8,6 +8,7 @@
 - [Base URL](#base-url)
 - [API key](#api-key)
   - [`<api-key>` placeholder](#api-key-placeholder)
+  - [API key format](#api-key-format)
 - [API types](#api-types)
   - [`HTTP` API](#http-api)
 
@@ -51,6 +52,20 @@ An API key is a secret value used to [authenticate](./http-auth.md#http-authenti
 ### `<api-key>` placeholder
 
 [API key](#api-key) (without `<` and `>`).
+
+### API key format
+
+> [!NOTE]
+> The goal is to make the key easy to remember.
+
+The API key string should include only these characters:
+
+- lowercase latin letters (`a` to `z`)
+- minus (`-`)
+
+Examples:
+
+- `my-secret-api-key`
 
 ## API types
 
