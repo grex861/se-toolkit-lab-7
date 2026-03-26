@@ -7,7 +7,7 @@ Supports two modes:
 
 import argparse
 import sys
-from handlers import (
+from handlers.commands import (
     handle_start,
     handle_help,
     handle_health,

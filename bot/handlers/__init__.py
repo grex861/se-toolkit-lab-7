@@ -5,7 +5,7 @@ They don't depend on Telegram - same logic works from --test mode,
 unit tests, or Telegram.
 """
 
-from .commands import (
+from handlers.commands import (
     handle_start,
     handle_help,
     handle_health,

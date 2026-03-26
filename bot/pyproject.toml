@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["."]
+packages = ["handlers", "services"]
 
 [build-system]
 requires = ["hatchling"]
