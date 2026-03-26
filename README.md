@@ -95,3 +95,100 @@ By the end of this lab, you should be able to say:
 ### Optional
 
 1. [Flutter Web Chatbot](./lab/tasks/optional/task-1.md)
+
+## Deploy
+
+### Prerequisites
+
+Ensure you have completed all required tasks and have the following:
+
+- Bot token from [@BotFather](https://t.me/BotFather)
+- LMS API key (from your backend setup)
+- LLM API credentials (for natural language queries)
+
+### Environment variables
+
+Create `.env.docker.secret` on your VM with the following variables:
+
+```bash
+# Telegram Bot
+BOT_TOKEN=<your-bot-token-from-botfather>
+
+# LMS API
+LMS_API_KEY=<your-lms-api-key>
+
+# LLM API
+LLM_API_KEY=<your-llm-api-key>
+LLM_API_BASE_URL=<llm-api-base-url>
+LLM_API_MODEL=coder-model
+```
+
+> **Note**: The bot uses Docker networking, so `LMS_API_BASE_URL` is set automatically in `docker-compose.yml` to `http://backend:8000`. Do not use `localhost` — that refers to the container itself, not your host machine.
+
+### Deploy commands
+
+```bash
+# SSH into your VM
+ssh user@your-vm-ip
+
+# Navigate to the project
+cd ~/se-toolkit-lab-7
+
+# Stop any running bot process (from previous nohup deployment)
+pkill -f "bot.py" 2>/dev/null
+
+# Build and start all services (backend + bot)
+docker compose --env-file .env.docker.secret up --build -d
+
+# Check that all services are running
+docker compose --env-file .env.docker.secret ps
+```
+
+You should see the `bot` service running alongside `backend`, `postgres`, `caddy`.
+
+### Verify deployment
+
+```bash
+# Check bot container logs
+docker compose --env-file .env.docker.secret logs bot --tail 20
+
+# Look for:
+# - "Application started" — bot connected to Telegram
+# - "HTTP Request: POST .../getUpdates" — bot is polling for messages
+# - No Python tracebacks
+
+# Test backend is still accessible
+curl -sf http://localhost:42002/docs
+```
+
+### Test in Telegram
+
+Send these commands to your bot:
+
+1. `/start` — should receive a welcome message
+2. `/health` — should see backend status
+3. `/labs` — should list available labs
+4. "what labs are available?" — natural language query (LLM-powered)
+
+### Troubleshooting
+
+| Symptom | Likely cause |
+|---------|--------------|
+| Bot container keeps restarting | Check logs: `docker compose logs bot`. Usually a missing env var or import error. |
+| `/health` fails but worked before | `LMS_API_BASE_URL` must be `http://backend:8000` (not `localhost:42002`). Inside Docker, `localhost` is the container itself. |
+| LLM queries fail but worked before | `LLM_API_BASE_URL` must use `host.docker.internal` (not `localhost`). The LLM proxy is on a different Docker network. |
+| "BOT_TOKEN is required" error | Bot env vars need to be in `.env.docker.secret`, not just `.env.bot.secret`. |
+| Build fails at `uv sync --frozen` | `uv.lock` must be copied in the Dockerfile. Check your `COPY` commands. |
+
+### Stop and restart
+
+```bash
+# Stop all services
+docker compose --env-file .env.docker.secret down
+
+# Restart services
+docker compose --env-file .env.docker.secret up -d
+
+# Rebuild after code changes
+docker compose --env-file .env.docker.secret up --build -d
+```
