@@ -10,6 +10,7 @@ import logging
 import sys
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart, Command
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from handlers.commands import (
     handle_start,
     handle_help,
@@ -17,11 +18,34 @@ from handlers.commands import (
     handle_labs,
     handle_scores,
 )
+from handlers.intent_router import handle_intent
 from config import load_config
 
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 logger = logging.getLogger(__name__)
+
+
+def get_main_keyboard() -> InlineKeyboardMarkup:
+    """Create an inline keyboard with common actions.
+
+    Returns:
+        Inline keyboard markup with buttons for common queries.
+    """
+    keyboard = [
+        [
+            InlineKeyboardButton(text="📋 Available Labs", callback_data="labs"),
+            InlineKeyboardButton(text="💚 Health Check", callback_data="health"),
+        ],
+        [
+            InlineKeyboardButton(text="📊 Scores", callback_data="scores"),
+            InlineKeyboardButton(text="🏆 Top Students", callback_data="top"),
+        ],
+        [
+            InlineKeyboardButton(text="❓ Help", callback_data="help"),
+        ],
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 
 def parse_command(text: str) -> tuple[str, str]:
@@ -66,8 +90,8 @@ def run_test_mode(command_text: str) -> None:
     elif command == "/scores":
         response = handle_scores(args)
     elif command == "/ask":
-        # Task 3: LLM intent routing
-        response = "Plain text queries will be handled by LLM in Task 3."
+        # Task 3: LLM intent routing - enable debug output to stderr
+        response = handle_intent(args, debug=True)
     else:
         response = f"Unknown command: {command}. Use /help to see available commands."
 
@@ -77,7 +101,8 @@ def run_test_mode(command_text: str) -> None:
 async def handle_start_command(message: types.Message) -> None:
     """Handle /start command from Telegram."""
     response = handle_start()
-    await message.reply(response)
+    keyboard = get_main_keyboard()
+    await message.reply(response, reply_markup=keyboard)
 
 
 async def handle_help_command(message: types.Message) -> None:
@@ -111,17 +136,38 @@ async def handle_scores_command(message: types.Message) -> None:
 
 
 async def handle_unknown_command(message: types.Message) -> None:
-    """Handle unknown commands from Telegram."""
+    """Handle unknown commands and plain text from Telegram."""
     text = message.text or ""
     command, args = parse_command(text)
 
     if command == "/ask":
         # Task 3: LLM intent routing
-        response = "Plain text queries will be handled by LLM in Task 3."
+        response = handle_intent(args, debug=True)
     else:
         response = f"Unknown command: {command}. Use /help to see available commands."
 
     await message.reply(response)
+
+
+async def handle_callback(message: types.CallbackQuery) -> None:
+    """Handle inline keyboard button clicks."""
+    action = message.data
+    response = ""
+
+    if action == "labs":
+        response = handle_labs()
+    elif action == "health":
+        response = handle_health()
+    elif action == "scores":
+        response = "Please specify a lab, e.g., /scores lab-04"
+    elif action == "top":
+        response = "Please specify a lab, e.g., ask 'who are the top 5 students in lab 4'"
+    elif action == "help":
+        response = handle_help()
+    else:
+        response = "Unknown action."
+
+    await message.message.edit_text(response)
 
 
 def run_telegram_mode() -> None:
@@ -143,7 +189,10 @@ def run_telegram_mode() -> None:
     dp.message(Command("labs"))(handle_labs_command)
     dp.message(Command("scores"))(handle_scores_command)
 
-    # Handle unknown commands
+    # Handle callback queries (inline buttons)
+    dp.callback_query()(handle_callback)
+
+    # Handle plain text messages (LLM intent routing)
     dp.message()(handle_unknown_command)
 
     logger.info("Starting bot in Telegram mode...")
