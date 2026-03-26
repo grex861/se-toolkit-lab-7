@@ -10,14 +10,14 @@ from dotenv import load_dotenv
 
 def load_config() -> dict[str, str]:
     """Load configuration from environment variables.
-    
+
     Returns:
         Dictionary with configuration values.
     """
     # Load from .env.bot.secret file
     env_path = Path(__file__).parent.parent / ".env.bot.secret"
     load_dotenv(env_path)
-    
+
     return {
         "BOT_TOKEN": os.getenv("BOT_TOKEN", ""),
         "LMS_API_BASE_URL": os.getenv("LMS_API_BASE_URL", ""),

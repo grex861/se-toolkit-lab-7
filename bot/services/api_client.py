@@ -47,9 +47,13 @@ def get_items() -> list[dict]:
         response.raise_for_status()
         return response.json()
     except httpx.ConnectError as e:
-        raise APIError(f"connection refused ({base_url.replace('http://', '').replace('https://', '').rstrip('/')}). Check that the services are running.") from e
+        raise APIError(
+            f"connection refused ({base_url.replace('http://', '').replace('https://', '').rstrip('/')}). Check that the services are running."
+        ) from e
     except httpx.HTTPStatusError as e:
-        raise APIError(f"HTTP {e.response.status_code} {e.response.reason_phrase}. The backend service may be down.") from e
+        raise APIError(
+            f"HTTP {e.response.status_code} {e.response.reason_phrase}. The backend service may be down."
+        ) from e
     except httpx.HTTPError as e:
         raise APIError(f"HTTP error: {str(e)}") from e
     finally:
@@ -74,9 +78,13 @@ def get_pass_rates(lab: str) -> list[dict]:
         response.raise_for_status()
         return response.json()
     except httpx.ConnectError as e:
-        raise APIError(f"connection refused ({base_url.replace('http://', '').replace('https://', '').rstrip('/')}). Check that the services are running.") from e
+        raise APIError(
+            f"connection refused ({base_url.replace('http://', '').replace('https://', '').rstrip('/')}). Check that the services are running."
+        ) from e
     except httpx.HTTPStatusError as e:
-        raise APIError(f"HTTP {e.response.status_code} {e.response.reason_phrase}. The backend service may be down.") from e
+        raise APIError(
+            f"HTTP {e.response.status_code} {e.response.reason_phrase}. The backend service may be down."
+        ) from e
     except httpx.HTTPError as e:
         raise APIError(f"HTTP error: {str(e)}") from e
     finally:
