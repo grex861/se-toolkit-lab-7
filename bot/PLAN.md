@@ -1,96 +1,33 @@
-# Development Plan — LMS Telegram Bot
+# Development Plan for LMS Telegram Bot
 
-## Overview
+This document outlines the development plan for the LMS Telegram Bot that connects to the LMS API and provides analytics for learners.
 
-This document outlines the implementation plan for building a Telegram bot that allows users to interact with the LMS (Learning Management System) backend. The bot will support slash commands like `/health`, `/labs`, and `/scores`, as well as natural language queries powered by an LLM.
+## Goals
+- Implement a Telegram bot that listens for commands like `/start`, `/help`, `/health`, and learners‑related requests.
+- Retrieve course analytics from the LMS API (items, scores, submissions, etc.).
+- Display charts or textual summaries in response to user queries.
+- Handle authentication and error cases gracefully (no crashing on unknown commands).
 
-## Task 1: Project Scaffold (Current)
+## Infrastructure
+- The bot runs on the VM via `uv run` or `docker-compose` in the `se-toolkit-lab-7` repository.
+- The LMS API is exposed on `http://<lms-api-base-url>` (`localhost:42002` on VM) with `LMS_API_KEY` for authentication.
+- Environment variables are stored in `.env.bot.secret` (`BOT_TOKEN`, `LMS_API_BASE_URL`, `LMS_API_KEY`, etc.).
 
-**Goal:** Establish a testable project structure with handler separation.
+## Components
+- `bot/bot.py` — main entry point, sets up the Telegram handlers and links them to business logic.
+- `bot/handlers/` — pure functions that handle commands and queries, separated from the Telegram API.
+- `bot/config.py` (optional) — central config for API URLs, keys, and logging.
 
-**Approach:**
-- Create a `bot/` directory with clear separation between handlers (business logic) and transport (Telegram)
-- Implement `--test` mode that calls handlers directly without Telegram
-- Build placeholder handlers for `/start`, `/help`, `/health`, `/labs`, `/scores`
-- Set up `pyproject.toml` with dependencies (aiogram, httpx, python-dotenv)
-- Create configuration loader that reads from `.env.bot.secret`
+## Implementation Steps
+1. Set up the project structure (`bot/PLAN.md`, `bot/handlers/__init__.py`, `bot/handlers/commands.py`).
+2. Define handlers for `/start`, `/help`, `/health`, and `/analytics`.
+3. Implement a client to call `LMS_API_BASE_URL` with `Authorization: Bearer` header.
+4. Test each handler locally with `uv run --env-file .env.bot.secret python bot/bot.py --test "/health"`.
+5. Deploy the bot on the VM with `uv run poe bot` or via `docker compose` and verify it works in Telegram.
 
-**Why this matters:** Testable handlers mean we can verify logic without deploying to Telegram. The same handler function works in `--test` mode, unit tests, and production.
+## Risk Mitigation
+- Use structured logging and error handling to avoid crashes on invalid inputs.
+- Validate that the LMS API responses are correct before rendering output.
+- Keep handlers small and testable.
 
-## Task 2: Backend Integration
-
-**Goal:** Connect handlers to the LMS backend API.
-
-**Approach:**
-- Create `services/api_client.py` with Bearer token authentication
-- Implement real `/health` handler that calls `GET /health` on backend
-- Implement `/labs` handler that calls `GET /items` to list labs
-- Implement `/scores <lab>` handler that calls analytics endpoints
-- Add error handling for network failures, auth errors, and backend downtime
-- Return user-friendly messages when things go wrong
-
-**Key pattern:** API client is a separate service. Handlers call the client, not HTTP directly. This makes testing easier and keeps concerns separated.
-
-## Task 3: Intent-Based Natural Language Routing
-
-**Goal:** Let users ask questions in plain language.
-
-**Approach:**
-- Create `services/llm_client.py` to communicate with the LLM API
-- Define tool descriptions for each backend endpoint (what it does, what params it needs)
-- Build intent router that sends user query + tool descriptions to LLM
-- LLM decides which tool to call and with what arguments
-- Execute the tool and return the result to the user
-
-**Why LLM routing:** Instead of regex or keyword matching, the LLM understands intent. "Show me lab 4 scores" and "what did I get on lab-04?" both map to the scores tool.
-
-**Critical:** Tool description quality matters more than prompt engineering. Clear, specific descriptions = reliable tool selection.
-
-## Task 4: Containerization and Deployment
-
-**Goal:** Deploy the bot alongside the existing backend on the VM.
-
-**Approach:**
-- Create `Dockerfile` for the bot (multi-stage build with uv)
-- Add bot service to `docker-compose.yml`
-- Configure container networking (bot talks to backend via service name, not localhost)
-- Document deployment process in README
-- Set up health checks and restart policies
-
-**Docker networking insight:** Inside Docker Compose, containers use service names as hostnames. The bot connects to `http://backend:42002`, not `localhost:42002`.
-
-## Architecture Summary
-
-```
-User (Telegram) → Bot Entry Point → Handler → Service → External API
-                      ↓
-                 --test mode (same handler, no Telegram)
-```
-
-**Handlers:** Pure functions. Input → text output. No Telegram, no HTTP, no side effects.
-
-**Services:** API clients (LMS backend, LLM). Handle HTTP, auth, retries, error handling.
-
-**Entry Point:** Telegram bot startup OR `--test` CLI. Routes to handlers.
-
-## Testing Strategy
-
-1. **Unit tests:** Test handlers with mock services
-2. **Test mode:** Manual verification via `--test` flag
-3. **Integration tests:** Test full flow with real backend (Task 2+)
-4. **Deploy verification:** Test in Telegram after deployment
-
-## Git Workflow
-
-For each task:
-1. Create issue on GitHub
-2. Branch: `task-N-short-description`
-3. Implement, test locally
-4. PR with "Closes #..." in description
-5. Partner review, then merge
-
-## Success Criteria
-
-- **P0:** All slash commands work with real backend data
-- **P1:** Natural language queries routed correctly by LLM
-- **P3:** Bot deployed and running on VM, accessible in Telegram
+This plan outlines the overall architecture and development milestones required to implement the LMS Telegram Bot.
