@@ -97,8 +97,12 @@ def handle_scores(lab_name: str = "") -> str:
 
         lines = [f"Pass rates for {display_lab}:"]
         for task in pass_rates:
-            task_name = task.get("task_name", task.get("name", "Unknown Task"))
-            pass_rate = task.get("pass_rate", 0)
+            # API returns: task, avg_score, attempts
+            task_name = task.get(
+                "task", task.get("task_name", task.get("name", "Unknown Task"))
+            )
+            # avg_score is the average score (0-100), use it as pass rate
+            pass_rate = task.get("avg_score", task.get("pass_rate", 0))
             attempts = task.get("attempts", 0)
             # Format: "- Repository Setup: 92.1% (187 attempts)"
             lines.append(f"- {task_name}: {pass_rate:.1f}% ({attempts} attempts)")
